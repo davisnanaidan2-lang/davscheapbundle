@@ -1,0 +1,206 @@
+<!DOCTYPE html><html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dav's Cheap Bundles</title>
+<script src="https://js.paystack.co/v1/inline.js"></script><style>
+body{margin:0;font-family:sans-serif;background:#f4f6fb}
+.header{background:linear-gradient(135deg,#1e4fbf,#0a2e8a);color:white;text-align:center;padding:20px}
+.container{padding:15px}
+.box{background:white;border-radius:20px;padding:20px;margin-bottom:15px;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,0.08);cursor:pointer}
+.box img{width:90px;margin-bottom:10px}
+.bundle{display:inline-block;padding:10px 14px;margin:6px;border-radius:20px;background:#e9edf7;cursor:pointer}
+.active{background:#ffcc00}
+input{width:100%;padding:13px;margin-top:12px;border-radius:12px;border:1px solid #ccc}
+button{width:100%;padding:14px;margin-top:12px;border:none;border-radius:12px;background:#1e4fbf;color:white}
+.hidden{display:none}
+.back{margin-bottom:10px;font-size:18px;cursor:pointer}
+.price{font-weight:bold;margin-top:10px}
+.loader{position:fixed;top:0;left:0;width:100%;height:100%;background:white;display:flex;align-items:center;justify-content:center;font-size:18px}
+</style></head><body><div class="header">
+<h2>Dav's Cheap Bundles</h2>
+<p>Your Home of Affordable Bundles</p>
+</div><div class="container" id="home"><div class="box" onclick="openPage('MTN')"><img src="mtn.jpg"><h3>MTN Data</h3></div>
+<div class="box" onclick="openPage('TELECEL')"><img src="telecel.jpg"><h3>Telecel Data</h3></div>
+<div class="box" onclick="openPage('AIRTEL')"><img src="airteltigo.jpg"><h3>AirtelTigo Data</h3></div>
+<div class="box" onclick="openPage('WAEC')"><img src="waec.jpg"><h3>WAEC Checker</h3></div>
+<div class="box" onclick="openPage('AIRTIME')"><img src="airtime.jpg"><h3>Airtime</h3></div><div style="margin-top:20px;text-align:center">
+📞 0547267793 / 0534322335
+</div></div><div class="container hidden" id="product">
+<div class="back" onclick="goHome()">← Back</div>
+<h3 id="title"></h3>
+<div id="bundles"></div>
+<div class="price" id="priceDisplay"></div>
+<input id="beneficiary" placeholder="Beneficiary Number">
+<input id="quantity" class="hidden" type="number" placeholder="Quantity" min="1" value="1">
+<button onclick="goCheckout()">BUY</button>
+</div><div class="container hidden" id="checkout">
+<div class="back" onclick="goProduct()">← Back</div>
+<h3>Checkout</h3>
+<input id="user" placeholder="Your Phone Number">
+<div id="summary"></div>
+<label><input type="checkbox" id="agree"> I agree delivery may take time</label>
+<button onclick="pay()">PAY</button>
+</div><script>
+
+let selectedNetwork="",selectedBundle="",selectedPrice=0;
+
+function showLoader(){
+let l=document.createElement("div");
+l.className="loader";
+l.id="loader";
+l.innerText="Loading...";
+document.body.appendChild(l);
+}
+function hideLoader(){document.getElementById("loader")?.remove();}
+
+let data={
+MTN:{
+"1GB":5.5,"2GB":10.5,"3GB":16,"4GB":21,"5GB":26,"6GB":30,"7GB":35.5,"8GB":40.5,
+"9GB":46,"10GB":51,"11GB":56,"12GB":60,"13GB":65,"14GB":70,"15GB":73,
+"16GB":78,"17GB":83,"18GB":88.5,"19GB":94,"20GB":98,"25GB":119,
+"30GB":138,"35GB":163,"40GB":177,"45GB":201,"50GB":224
+},
+AIRTEL:{
+"1GB":5,"2GB":9,"3GB":14.7,"4GB":18,"5GB":23,"6GB":27,"7GB":31,"8GB":35,
+"9GB":39,"10GB":43,"11GB":46,"12GB":50,"13GB":54,"14GB":58,"15GB":63,
+"16GB":68,"17GB":73,"18GB":78,"19GB":82,"20GB":86,"25GB":108,
+"30GB":129,"35GB":148,"40GB":163,"45GB":181,"50GB":195
+},
+TELECEL:{
+"5GB":26,"10GB":51,"15GB":70,"20GB":93,"25GB":119,
+"30GB":135,"35GB":159,"40GB":173,"45GB":204,"50GB":220
+}
+};
+
+function openPage(net){
+showLoader();
+setTimeout(()=>{
+selectedNetwork=net;
+selectedBundle="";
+selectedPrice=0;
+home.classList.add("hidden");
+product.classList.remove("hidden");
+title.innerText=net;
+bundles.innerHTML="";
+priceDisplay.innerText="";
+quantity.classList.add("hidden");
+
+if(net==="WAEC"){
+quantity.classList.remove("hidden");
+bundles.innerHTML=`
+<div class="bundle" onclick="selectWAEC(this,'BECE')">BECE</div>
+<div class="bundle" onclick="selectWAEC(this,'WASSCE')">WASSCE</div>`;
+hideLoader();return;
+}
+
+if(net==="AIRTIME"){
+bundles.innerHTML=`
+<div class="bundle" onclick="selectAirtime(this,'MTN')">MTN</div>
+<div class="bundle" onclick="selectAirtime(this,'TELECEL')">Telecel</div>
+<div class="bundle" onclick="selectAirtime(this,'AIRTEL')">AirtelTigo</div>
+<input id="amount" placeholder="Enter Amount">`;
+hideLoader();return;
+}
+
+for(let k in data[net]){
+let b=document.createElement("div");
+b.className="bundle";
+b.innerText=k;
+b.onclick=()=>{
+selectedBundle=k;
+selectedPrice=data[net][k];
+document.querySelectorAll(".bundle").forEach(x=>x.classList.remove("active"));
+b.classList.add("active");
+priceDisplay.innerText="₵"+selectedPrice;
+};
+bundles.appendChild(b);
+}
+hideLoader();
+},700);
+}
+
+function selectWAEC(el,type){
+selectedBundle=type;
+selectedPrice=22;
+document.querySelectorAll(".bundle").forEach(b=>b.classList.remove("active"));
+el.classList.add("active");
+updateTotal();
+}
+
+function updateTotal(){
+let qty=quantity.value;
+priceDisplay.innerText="₵"+(selectedPrice*qty);
+}
+
+function selectAirtime(el,net){
+selectedNetwork=net;
+document.querySelectorAll(".bundle").forEach(b=>b.classList.remove("active"));
+el.classList.add("active");
+}
+
+function goCheckout(){
+if(!selectedBundle){alert("Select bundle");return;}
+if(!beneficiary.value){alert("Enter number");return;}
+
+showLoader();
+setTimeout(()=>{
+product.classList.add("hidden");
+checkout.classList.remove("hidden");
+
+summary.innerHTML=`
+Network: ${selectedNetwork}<br>
+Product: ${selectedBundle}<br>
+Number: ${beneficiary.value}<br>
+Amount: ₵${selectedPrice}`;
+hideLoader();
+},700);
+}
+
+async function sendOrder(data){
+await fetch("https://dav-backend-production.up.railway.app/save-order",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify(data)
+})
+.then(r=>r.json())
+.then(res=>{
+localStorage.setItem("orderDetails",JSON.stringify(res.order));
+window.location.href="success.html";
+});
+}
+
+function pay(){
+if(!agree.checked){alert("Agree first");return;}
+
+let qty=quantity.value||1;
+let total=selectedPrice*qty;
+
+showLoader();
+
+setTimeout(()=>{
+PaystackPop.setup({
+key:"pk_test_472b3376d6fa4bd7b65c91c975ad4f729a45cfe5",
+email:"test@email.com",
+amount:Math.ceil(total*1.02*100),
+currency:"GHS",
+channels:["mobile_money"],
+callback:function(){
+sendOrder({
+name:"Customer",
+phone:user.value,
+product:selectedBundle,
+quantity:qty,
+beneficiary:beneficiary.value,
+amount:total
+});
+}
+}).openIframe();
+hideLoader();
+},700);
+}
+
+function goHome(){product.classList.add("hidden");home.classList.remove("hidden");}
+function goProduct(){checkout.classList.add("hidden");product.classList.remove("hidden");}
+
+</script></body>
+</html>

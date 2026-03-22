@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family:sans-serif;background:#f4f6fb;padding:20px">
+
+<div style="background:white;padding:20px;border-radius:15px">
+
+<h2 style="color:green">Order Confirmed ✅</h2>
+
+<div id="details"></div>
+
+</div>
+
+<script>
+let o = JSON.parse(localStorage.getItem("orderDetails"));
+
+document.getElementById("details").innerHTML = `
+Order No: ${o.orderNumber}<br>
+Date: ${new Date(o.date).toLocaleString()}<br>
+Product: ${o.product}<br>
+Quantity: ${o.quantity}<br>
+Number: ${o.beneficiary}<br>
+Amount: GHS ${o.amount}
+`;
+</script>
+
+</body>
+</html>
